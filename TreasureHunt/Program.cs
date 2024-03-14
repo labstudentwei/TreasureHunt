@@ -5,39 +5,101 @@ namespace TreasureHunt
 {
     public class User
     {
-        public int UserId { get; set; }
-        public string Username { get; set; }
-        public int RoleId { get; set; }
+
+        private int userId;
+        private string username;
+        private int roleId;
+
 
         public User(int userId, string username, int roleId)
         {
-            UserId = userId;
-            Username = username;
-            RoleId = roleId;
+            this.userId = userId;
+            this.username = username;
+            this.roleId = roleId;
+        }
+
+
+        public int UserId
+        {
+            get { return userId; }
+
+        }
+
+        public string Username
+        {
+            get { return username; }
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    throw new ArgumentException("Username cannot be null or whitespace.");//error: no throw exception
+                }
+                username = value;
+            }
+        }
+
+        public int RoleId
+        {
+            get { return roleId; }
+            set { roleId = value; }
         }
 
         public override string ToString()
         {
             return Username;
         }
-
-
     }
+
 
     public class Requirement
     {
-        public int RequirementId { get; set; }
-        public int ProjectId { get; set; } = 1;
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public string Status { get; set; }
+        private int requirementId;
+        private int projectId = 1;
+        private string title;
+        private string description;
+        private string status;
+
+        public int RequirementId
+        {
+            get { return requirementId; }
+        }
+
+        public int ProjectId
+        {
+            get { return projectId; }
+        }
+
+        public string Title
+        {
+            get { return title; }
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    throw new ArgumentException("Title cannot be null or whitespace.");//error: no throw exception
+                }
+                title = value;
+            }
+        }
+
+        public string Description
+        {
+            get { return description; }
+            set { description = value; }
+        }
+
+        public string Status
+        {
+            get { return status; }
+            set { status = value; }
+        }
 
         public Requirement(int requirementId, string title, string description, string status = "InActive")
         {
-            RequirementId = requirementId;
-            Title = title;
-            Description = description;
-            Status = status;
+            this.requirementId = requirementId;
+            this.title = title;
+            this.description = description;
+            this.status = status;
         }
 
         public override string ToString()
@@ -45,6 +107,7 @@ namespace TreasureHunt
             return Title;
         }
     }
+
 
 
 
@@ -180,20 +243,29 @@ namespace TreasureHunt
             dbManager = manager;
         }
 
-        public void AddUser(User user)
+        public bool AddUser(User user)
         {
+            if (string.IsNullOrWhiteSpace(user.Username))
+            {
+                Console.WriteLine("Username cannot be null or whitespace.");
+                return false;
+            }
+
             var existingUsers = dbManager.ListUsers();
             var userExists = existingUsers.Any(u => u.Username.Equals(user.Username, StringComparison.OrdinalIgnoreCase));
 
             if (userExists)
             {
-                throw new Exception("Username already exists");
+                Console.WriteLine("Username already exists.");
+                return false;
             }
             else
             {
                 dbManager.AddUser(user);
+                return true;
             }
         }
+
 
 
         public List<User> ListUsers()
@@ -201,22 +273,29 @@ namespace TreasureHunt
             return dbManager.ListUsers();
         }
 
-        public void AddRequirement(Requirement requirement)
+        public bool AddRequirement(Requirement requirement)
         {
+            if (string.IsNullOrWhiteSpace(requirement.Title))
+            {
+                Console.WriteLine("Title cannot be null or whitespace.");
+                return false;
+            }
 
             var existingRequirements = dbManager.ListRequirements();
             var requirementExists = existingRequirements.Any(r => r.Title.Equals(requirement.Title, StringComparison.OrdinalIgnoreCase) && r.ProjectId == requirement.ProjectId);
 
             if (requirementExists)
             {
-                throw new Exception("Requirement already exists");
+                Console.WriteLine("Requirement with the same title already exists.");
+                return false;
             }
             else
             {
                 dbManager.AddRequirement(requirement);
-
+                return true;
             }
         }
+
 
 
         public List<Requirement> ListRequirements()
@@ -284,7 +363,9 @@ namespace TreasureHunt
             int roleId = Convert.ToInt32(Console.ReadLine());
 
             User newUser = new User(0, username, roleId);
-            appService.AddUser(newUser);
+            bool result = appService.AddUser(newUser);
+
+           
         }
 
         private void ListUsers()
@@ -303,8 +384,13 @@ namespace TreasureHunt
             Console.WriteLine("Enter requirement description:");
             string description = Console.ReadLine();
 
-            Requirement newRequirement = new Requirement(0, title, description, "InActive"); // RequirementId由数据库自动生成，这里传0作为占位符
-            appService.AddRequirement(newRequirement);
+            Requirement newRequirement = new Requirement(0, title, description, "InActive"); 
+            bool result = appService.AddRequirement(newRequirement);
+
+            if (result)
+            {
+                Console.WriteLine("Requirement successfully added.");
+            }
         }
 
         private void ListRequirements()
