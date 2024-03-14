@@ -27,7 +27,7 @@ namespace TreasureHunt
     public class Requirement
     {
         public int RequirementId { get; set; }
-        public int ProjectId { get; set; } = 1; 
+        public int ProjectId { get; set; } = 1;
         public string Title { get; set; }
         public string Description { get; set; }
         public string Status { get; set; }
@@ -171,9 +171,69 @@ namespace TreasureHunt
 
     }
 
-    public class Application
+    public class ApplicationService
     {
-        private DatabaseManager dbManager = new DatabaseManager();
+        private DatabaseManager dbManager;
+
+        public ApplicationService(DatabaseManager manager)
+        {
+            dbManager = manager;
+        }
+
+        public void AddUser(User user)
+        {
+            var existingUsers = dbManager.ListUsers();
+            var userExists = existingUsers.Any(u => u.Username.Equals(user.Username, StringComparison.OrdinalIgnoreCase));
+
+            if (userExists)
+            {
+                throw new Exception("Username already exists");
+            }
+            else
+            {
+                dbManager.AddUser(user);
+            }
+        }
+
+
+        public List<User> ListUsers()
+        {
+            return dbManager.ListUsers();
+        }
+
+        public void AddRequirement(Requirement requirement)
+        {
+
+            var existingRequirements = dbManager.ListRequirements();
+            var requirementExists = existingRequirements.Any(r => r.Title.Equals(requirement.Title, StringComparison.OrdinalIgnoreCase) && r.ProjectId == requirement.ProjectId);
+
+            if (requirementExists)
+            {
+                throw new Exception("Requirement already exists");
+            }
+            else
+            {
+                dbManager.AddRequirement(requirement);
+
+            }
+        }
+
+
+        public List<Requirement> ListRequirements()
+        {
+            return dbManager.ListRequirements();
+        }
+    }
+
+    public class UI
+    {
+        private ApplicationService appService;
+
+        public UI()
+        {
+            DatabaseManager dbManager = new DatabaseManager();
+            appService = new ApplicationService(dbManager);
+        }
 
         public void Run()
         {
@@ -223,13 +283,13 @@ namespace TreasureHunt
             Console.WriteLine("Enter role ID (1 for manager, 2 for staff):");
             int roleId = Convert.ToInt32(Console.ReadLine());
 
-            User newUser = new User(0, username, roleId); 
-            dbManager.AddUser(newUser);
+            User newUser = new User(0, username, roleId);
+            appService.AddUser(newUser);
         }
 
         private void ListUsers()
         {
-            List<User> users = dbManager.ListUsers();
+            List<User> users = appService.ListUsers();
             foreach (User user in users)
             {
                 Console.WriteLine(user.ToString());
@@ -244,12 +304,12 @@ namespace TreasureHunt
             string description = Console.ReadLine();
 
             Requirement newRequirement = new Requirement(0, title, description, "InActive"); // RequirementId由数据库自动生成，这里传0作为占位符
-            dbManager.AddRequirement(newRequirement);
+            appService.AddRequirement(newRequirement);
         }
 
         private void ListRequirements()
         {
-            List<Requirement> requirements = dbManager.ListRequirements();
+            List<Requirement> requirements = appService.ListRequirements();
 
 
             foreach (Requirement requirement in requirements)
@@ -268,10 +328,10 @@ namespace TreasureHunt
     {
         static void Main(string[] args)
         {
-            
-                Application app = new Application();
-                app.Run();
-            
+
+            UI app = new UI();
+            app.Run();
+
         }
 
     }
